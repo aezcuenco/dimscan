@@ -473,7 +473,7 @@ html,body{height:100%;width:100%;overflow:hidden;background:var(--bg);color:var(
 <script src="https://cdn.jsdelivr.net/npm/@zxing/library@0.21.3/umd/index.min.js"></script>
 <script>
 // ── Build version (cambiá este string cada vez que subís cambios) ──
-const BUILD_VERSION = '2026-05-15-48';
+const BUILD_VERSION = '2026-05-16-27';
 
 // ── State ──────────────────────────────────────────────────
 const state = {
@@ -608,18 +608,28 @@ async function startBarcode() {
     hints.set(dh.POSSIBLE_FORMATS, [
       fmt.CODE_128, fmt.CODE_39, fmt.CODE_93,
       fmt.EAN_13,  fmt.EAN_8,  fmt.UPC_A, fmt.UPC_E,
-      fmt.ITF,     fmt.CODABAR,
-      fmt.QR_CODE, fmt.DATA_MATRIX, fmt.PDF_417
+      fmt.ITF,     fmt.CODABAR, fmt.RSS_14, fmt.RSS_EXPANDED,
+      fmt.QR_CODE, fmt.DATA_MATRIX, fmt.PDF_417, fmt.AZTEC
     ]);
     hints.set(dh.TRY_HARDER, true);
+    hints.set(dh.ASSUME_GS1, false);
 
-    const reader = new ZXing.BrowserMultiFormatReader(hints, 250);
+    // Throttle bajo (50ms) = más intentos por segundo
+    const reader = new ZXing.BrowserMultiFormatReader(hints, 50);
     state.barcodeReader = reader;
+    state.scanAttempts = 0;
     reader.decodeFromVideoElement(video, (result, err) => {
+      state.scanAttempts++;
+      // Feedback cada ~40 intentos (~2s)
+      if (state.scanAttempts % 40 === 0) {
+        statusTxt.textContent = 'Buscando código… (' + state.scanAttempts + ' intentos)';
+      }
       if (result && result.getText) {
         const txt = result.getText();
         if (txt && txt.trim().length >= 4) {
+          const fmtName = result.getBarcodeFormat ? String(result.getBarcodeFormat()) : '';
           stopBarcode();
+          toast('✅ Detectado: ' + txt + (fmtName ? ' [' + fmtName + ']' : ''), 3500);
           onBarcodeDetected(txt.trim());
         }
       }
@@ -818,7 +828,9 @@ function arFrame(time, xrFrame) {
     const hits = xrFrame.getHitTestResults(state.xrHitTestSource);
     if (hits.length > 0) {
       const pose = hits[0].getPose(state.xrRefSpace);
-      state.xrCurrentHit = { ...pose.transform.position };
+      const p = pose.transform.position;
+      // Copiar x/y/z explícitamente (spread no funciona sobre DOMPointReadOnly)
+      state.xrCurrentHit = { x: p.x, y: p.y, z: p.z };
       hitNow = true;
     } else {
       state.xrCurrentHit = null;
@@ -855,7 +867,13 @@ function arTap() {
   if (state.xrPoints.length >= 3) return;
   if (!state.xrCurrentHit) { toast('⚠ Apuntá al suelo y esperá que el AR detecte la superficie'); return; }
 
-  state.xrPoints.push({ ...state.xrCurrentHit });
+  const h = state.xrCurrentHit;
+  // Copia explícita por valor (no spread) y validación contra NaN
+  if (typeof h.x !== 'number' || isNaN(h.x) || typeof h.y !== 'number' || isNaN(h.y) || typeof h.z !== 'number' || isNaN(h.z)) {
+    toast('⚠ Punto inválido — reintentá');
+    return;
+  }
+  state.xrPoints.push({ x: h.x, y: h.y, z: h.z });
   const n = state.xrPoints.length;
   updateARUI(n);
 
@@ -867,6 +885,13 @@ function arTap() {
     ) * 100;
     const d12 = d(p[0], p[1]);
     const d13 = d(p[0], p[2]);
+
+    if (isNaN(d12) || isNaN(d13) || d12 < 1 || d13 < 1) {
+      toast('⚠ Error de cálculo — reiniciá puntos y reintentá');
+      resetARPoints();
+      return;
+    }
+
     const largo = Math.max(d12, d13).toFixed(1);
     const ancho = Math.min(d12, d13).toFixed(1);
 
