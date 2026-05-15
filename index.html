@@ -1,0 +1,903 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no">
+<meta name="theme-color" content="#1F4E79">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>DimScan – Encopress Cross Dock</title>
+
+<style>
+:root {
+  --blue-dark: #1F4E79;
+  --blue-mid:  #2E75B6;
+  --blue-light:#BDD7EE;
+  --bg:        #0f1923;
+  --surface:   #1a2535;
+  --surface2:  #243044;
+  --text:      #e8edf2;
+  --text2:     #9aafc4;
+  --accent:    #4da3e8;
+  --green:     #4caf7d;
+  --orange:    #f0943a;
+  --red:       #e05555;
+  --radius:    14px;
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+html,body{height:100%;width:100%;overflow:hidden;background:var(--bg);color:var(--text);font-family:'Arial',sans-serif;}
+
+/* ── Screens ── */
+.screen{display:none;flex-direction:column;height:100%;width:100%;position:absolute;top:0;left:0;background:var(--bg);}
+.screen.active{display:flex;}
+
+/* ── Header ── */
+.hdr{background:var(--blue-dark);padding:14px 18px;display:flex;align-items:center;gap:12px;flex-shrink:0;box-shadow:0 2px 8px rgba(0,0,0,.4);}
+.hdr-back{background:rgba(255,255,255,.15);border:none;color:#fff;width:36px;height:36px;border-radius:50%;font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center;}
+.hdr-title{font-size:17px;font-weight:700;color:#fff;flex:1;}
+.hdr-badge{background:rgba(255,255,255,.2);border-radius:12px;padding:3px 10px;font-size:12px;color:#fff;}
+
+/* ── Scroll area ── */
+.body{flex:1;overflow-y:auto;padding:18px;display:flex;flex-direction:column;gap:14px;}
+
+/* ── Cards ── */
+.card{background:var(--surface);border-radius:var(--radius);padding:18px;border:1px solid rgba(255,255,255,.06);}
+.card-label{font-size:11px;color:var(--text2);text-transform:uppercase;letter-spacing:.8px;margin-bottom:6px;}
+.card-value{font-size:28px;font-weight:700;color:var(--accent);}
+.card-sub{font-size:12px;color:var(--text2);margin-top:2px;}
+
+/* ── Stat grid ── */
+.stat-row{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+
+/* ── Buttons ── */
+.btn{display:flex;align-items:center;justify-content:center;gap:8px;border:none;border-radius:var(--radius);padding:16px 20px;font-size:16px;font-weight:700;cursor:pointer;width:100%;transition:opacity .15s,transform .1s;}
+.btn:active{opacity:.8;transform:scale(.98);}
+.btn-primary{background:var(--blue-mid);color:#fff;}
+.btn-green{background:var(--green);color:#fff;}
+.btn-ghost{background:var(--surface2);color:var(--text);}
+.btn-red{background:var(--red);color:#fff;}
+.btn-sm{padding:10px 16px;font-size:14px;}
+.btn-icon{font-size:20px;}
+
+/* ── Input ── */
+.field{display:flex;flex-direction:column;gap:6px;}
+.field label{font-size:13px;color:var(--text2);}
+.field input,.field select,.field textarea{background:var(--surface2);border:1.5px solid rgba(255,255,255,.1);border-radius:10px;padding:14px;font-size:18px;color:var(--text);width:100%;outline:none;font-family:Arial,sans-serif;}
+.field input:focus,.field select:focus{border-color:var(--accent);}
+.field input[type=number]{font-size:28px;font-weight:700;text-align:center;letter-spacing:1px;}
+.field textarea{font-size:14px;resize:none;height:70px;}
+
+/* ── Dim grid ── */
+.dim-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;}
+
+/* ── Formula box ── */
+.calc-box{background:var(--surface2);border-radius:12px;padding:16px;border-left:4px solid var(--accent);}
+.calc-row{display:flex;justify-content:space-between;align-items:center;padding:5px 0;}
+.calc-row+.calc-row{border-top:1px solid rgba(255,255,255,.06);}
+.calc-key{font-size:13px;color:var(--text2);}
+.calc-val{font-size:16px;font-weight:700;color:var(--text);}
+.calc-val.highlight{color:var(--accent);font-size:20px;}
+.calc-val.green{color:var(--green);}
+
+/* ── Step indicator ── */
+.steps{display:flex;gap:8px;justify-content:center;padding:4px 0;}
+.step-dot{width:8px;height:8px;border-radius:50%;background:var(--surface2);}
+.step-dot.done{background:var(--green);}
+.step-dot.active{background:var(--accent);width:24px;border-radius:4px;}
+
+/* ── Record list ── */
+.record-item{background:var(--surface);border-radius:12px;padding:14px 16px;border:1px solid rgba(255,255,255,.06);display:flex;flex-direction:column;gap:6px;}
+.record-top{display:flex;justify-content:space-between;align-items:flex-start;}
+.record-guia{font-size:15px;font-weight:700;color:var(--accent);}
+.record-date{font-size:11px;color:var(--text2);}
+.record-dims{font-size:13px;color:var(--text2);}
+.record-fact{font-size:14px;font-weight:700;color:var(--green);}
+.record-del{background:none;border:none;color:var(--red);font-size:18px;cursor:pointer;padding:4px;}
+
+/* ── Alert ── */
+.alert{border-radius:10px;padding:12px 16px;font-size:13px;line-height:1.5;}
+.alert-blue{background:rgba(46,117,182,.2);border:1px solid rgba(46,117,182,.4);color:var(--blue-light);}
+.alert-orange{background:rgba(240,148,58,.15);border:1px solid rgba(240,148,58,.4);color:#f0c07a;}
+.alert-green{background:rgba(76,175,125,.15);border:1px solid rgba(76,175,125,.4);color:#7de0a8;}
+
+/* ── Camera screen ── */
+#screen-barcode{background:#000;}
+#barcode-video{position:absolute;top:0;left:0;width:100%;height:100%;object-fit:cover;}
+#barcode-canvas{position:absolute;top:0;left:0;width:100%;height:100%;}
+.scan-overlay{position:absolute;top:0;left:0;width:100%;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;pointer-events:none;}
+.scan-frame{width:260px;height:160px;border:3px solid var(--accent);border-radius:16px;box-shadow:0 0 0 9999px rgba(0,0,0,.55);}
+.scan-line{position:absolute;width:220px;height:2px;background:linear-gradient(90deg,transparent,var(--accent),transparent);animation:scanline 2s ease-in-out infinite;}
+@keyframes scanline{0%,100%{top:calc(50% - 70px);}50%{top:calc(50% + 70px);}}
+.scan-tip{position:absolute;bottom:120px;color:#fff;font-size:14px;text-align:center;padding:0 30px;text-shadow:0 1px 4px rgba(0,0,0,.8);}
+.scan-btns{position:absolute;bottom:30px;display:flex;gap:12px;width:100%;padding:0 20px;pointer-events:all;}
+
+/* ── AR screen ── */
+#screen-ar{background:#000;}
+#ar-canvas{position:absolute;top:0;left:0;width:100%;height:100%;}
+#ar-overlay{position:absolute;top:0;left:0;width:100%;height:100%;display:flex;flex-direction:column;pointer-events:none;}
+.ar-top{padding:20px;display:flex;justify-content:space-between;align-items:flex-start;pointer-events:all;}
+.ar-step-card{background:rgba(15,25,35,.85);border-radius:12px;padding:14px 18px;max-width:260px;border:1px solid rgba(77,163,232,.3);}
+.ar-step-num{font-size:11px;color:var(--accent);text-transform:uppercase;letter-spacing:.8px;margin-bottom:4px;}
+.ar-step-text{font-size:14px;color:#fff;line-height:1.4;}
+.ar-cancel{background:rgba(224,85,85,.8);border:none;color:#fff;border-radius:10px;padding:10px 16px;font-size:13px;font-weight:700;cursor:pointer;}
+.ar-center{flex:1;display:flex;align-items:center;justify-content:center;}
+.reticle{width:60px;height:60px;position:relative;}
+.reticle::before,.reticle::after{content:'';position:absolute;background:var(--accent);}
+.reticle::before{width:2px;height:100%;left:50%;transform:translateX(-50%);}
+.reticle::after{width:100%;height:2px;top:50%;transform:translateY(-50%);}
+.reticle-ring{position:absolute;width:60px;height:60px;border:2px solid var(--accent);border-radius:50%;opacity:.6;animation:pulse 1.5s ease-in-out infinite;}
+@keyframes pulse{0%,100%{transform:scale(1);opacity:.6;}50%{transform:scale(1.2);opacity:.3;}}
+.ar-tap-hint{background:rgba(77,163,232,.9);border-radius:20px;padding:6px 16px;font-size:13px;color:#fff;font-weight:700;}
+.ar-bottom{padding:20px;pointer-events:all;}
+.ar-pts-row{display:flex;gap:8px;justify-content:center;margin-bottom:12px;}
+.ar-pt{width:40px;height:40px;border-radius:50%;border:2px solid var(--accent);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:var(--text2);}
+.ar-pt.done{background:var(--accent);color:#fff;border-color:var(--accent);}
+.ar-pt.active{border-color:#fff;color:#fff;animation:ptpulse 1s ease-in-out infinite;}
+@keyframes ptpulse{0%,100%{box-shadow:0 0 0 0 rgba(77,163,232,.4);}50%{box-shadow:0 0 0 8px rgba(77,163,232,0);}}
+.ar-result{background:rgba(15,25,35,.9);border-radius:12px;padding:16px;border:1px solid rgba(76,175,125,.3);}
+.ar-result-row{display:flex;justify-content:space-between;font-size:15px;padding:4px 0;}
+.ar-result-row+.ar-result-row{border-top:1px solid rgba(255,255,255,.08);}
+.ar-result-key{color:var(--text2);}
+.ar-result-val{font-weight:700;color:var(--green);}
+.ar-tap-btn{background:var(--accent);border:none;color:#fff;border-radius:var(--radius);padding:16px;font-size:18px;font-weight:700;cursor:pointer;width:100%;pointer-events:all;margin-top:10px;}
+
+/* ── Toast ── */
+#toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:var(--surface2);color:var(--text);padding:10px 22px;border-radius:20px;font-size:14px;font-weight:700;z-index:9999;opacity:0;transition:opacity .3s;pointer-events:none;white-space:nowrap;}
+#toast.show{opacity:1;}
+
+/* ── Empty state ── */
+.empty{text-align:center;padding:40px 20px;color:var(--text2);}
+.empty-icon{font-size:48px;margin-bottom:12px;}
+.empty-text{font-size:14px;line-height:1.6;}
+
+/* ── Bottom bar ── */
+.bottom-bar{padding:16px;flex-shrink:0;display:flex;gap:10px;}
+
+/* ── Logo ── */
+.logo-row{display:flex;align-items:center;gap:10px;}
+.logo-box{width:36px;height:36px;background:var(--blue-mid);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:900;color:#fff;}
+.logo-text{font-size:20px;font-weight:700;color:#fff;}
+.logo-sub{font-size:12px;color:var(--text2);margin-top:1px;}
+
+/* ── Tag ── */
+.tag{display:inline-block;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:700;}
+.tag-blue{background:rgba(46,117,182,.3);color:var(--accent);}
+.tag-green{background:rgba(76,175,125,.2);color:var(--green);}
+.tag-orange{background:rgba(240,148,58,.2);color:var(--orange);}
+</style>
+</head>
+<body>
+
+<!-- ══════════════════════════════════════════
+     SCREEN: HOME
+══════════════════════════════════════════ -->
+<div class="screen active" id="screen-home">
+  <div class="hdr">
+    <div class="logo-row">
+      <div class="logo-box">E</div>
+      <div>
+        <div class="logo-text">DimScan</div>
+        <div class="logo-sub">Encopress Cross Dock</div>
+      </div>
+    </div>
+  </div>
+  <div class="body">
+    <div class="stat-row">
+      <div class="card">
+        <div class="card-label">Turno actual</div>
+        <div class="card-value" id="stat-count">0</div>
+        <div class="card-sub">bultos registrados</div>
+      </div>
+      <div class="card">
+        <div class="card-label">Peso fact. total</div>
+        <div class="card-value" id="stat-weight" style="font-size:22px;">0 kg</div>
+        <div class="card-sub">acumulado</div>
+      </div>
+    </div>
+
+    <div class="card" id="xr-status-card">
+      <div class="card-label">Estado del sistema AR</div>
+      <div id="xr-status-text" style="font-size:13px;color:var(--text2);margin-top:4px;">Verificando compatibilidad…</div>
+    </div>
+
+    <div class="alert alert-blue">
+      <strong>¿Primera vez?</strong><br>
+      Abrí esta página en <strong>Chrome para Android</strong>. Podés instalarla como app: tocá los 3 puntos → "Añadir a pantalla de inicio".
+    </div>
+  </div>
+  <div class="bottom-bar" style="flex-direction:column;gap:10px;">
+    <button class="btn btn-primary" onclick="startNewRecord()">
+      <span class="btn-icon">📦</span> Nuevo Registro
+    </button>
+    <button class="btn btn-ghost" onclick="showScreen('screen-records')">
+      <span class="btn-icon">📋</span> Ver Registros del Turno
+    </button>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════
+     SCREEN: BARCODE SCAN
+══════════════════════════════════════════ -->
+<div class="screen" id="screen-barcode">
+  <video id="barcode-video" autoplay playsinline muted></video>
+  <canvas id="barcode-canvas"></canvas>
+  <div class="scan-overlay">
+    <div class="scan-frame"></div>
+    <div class="scan-line"></div>
+    <div class="scan-tip">Apuntá la cámara al código de barras del bulto</div>
+  </div>
+  <div class="scan-btns">
+    <button class="btn btn-ghost" style="flex:1" onclick="stopBarcode();showScreen('screen-home')">Cancelar</button>
+    <button class="btn btn-ghost" style="flex:1" onclick="enterBarcodeManual()">Ingresar manualmente</button>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════
+     SCREEN: AR MEASUREMENT
+══════════════════════════════════════════ -->
+<div class="screen" id="screen-ar">
+  <canvas id="ar-canvas"></canvas>
+  <div id="ar-overlay">
+    <div class="ar-top">
+      <div class="ar-step-card">
+        <div class="ar-step-num" id="ar-step-label">Paso 1 de 3</div>
+        <div class="ar-step-text" id="ar-step-text">Apuntá al suelo junto al bulto y tocá la <strong>primera esquina</strong> de la base.</div>
+      </div>
+      <button class="ar-cancel" onclick="stopAR();showScreen('screen-measure')">✕ Manual</button>
+    </div>
+    <div class="ar-center">
+      <div>
+        <div class="reticle-ring"></div>
+        <div class="reticle"></div>
+        <div style="text-align:center;margin-top:12px;"><span class="ar-tap-hint" id="ar-tap-label">↓ Tocá para marcar</span></div>
+      </div>
+    </div>
+    <div class="ar-bottom">
+      <div class="ar-pts-row" id="ar-pts-row">
+        <div class="ar-pt active" id="ar-pt-1">E1</div>
+        <div class="ar-pt" id="ar-pt-2">E2</div>
+        <div class="ar-pt" id="ar-pt-3">E3</div>
+      </div>
+      <div id="ar-result-box" style="display:none;">
+        <div class="ar-result">
+          <div class="ar-result-row"><span class="ar-result-key">Largo</span><span class="ar-result-val" id="ar-r-largo">—</span></div>
+          <div class="ar-result-row"><span class="ar-result-key">Ancho</span><span class="ar-result-val" id="ar-r-ancho">—</span></div>
+        </div>
+        <button class="ar-tap-btn" onclick="confirmARMeasure()">✓ Confirmar medidas</button>
+      </div>
+      <button class="ar-tap-btn" id="ar-tap-btn" onclick="arTap()">📍 Marcar punto</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════
+     SCREEN: MANUAL MEASURE (fallback + alto)
+══════════════════════════════════════════ -->
+<div class="screen" id="screen-measure">
+  <div class="hdr">
+    <button class="hdr-back" onclick="showScreen('screen-home')">←</button>
+    <div class="hdr-title">Dimensiones del Bulto</div>
+    <span class="hdr-badge" id="measure-guia-badge">—</span>
+  </div>
+  <div class="body">
+    <div class="steps">
+      <div class="step-dot done"></div>
+      <div class="step-dot active"></div>
+      <div class="step-dot"></div>
+    </div>
+
+    <div class="alert alert-blue" id="ar-prefill-note" style="display:none;">
+      ✅ <strong>Largo y Ancho cargados desde AR.</strong> Revisá y completá el Alto.
+    </div>
+
+    <div class="card">
+      <div class="card-label" style="margin-bottom:12px;">Medidas en centímetros</div>
+      <div class="dim-grid">
+        <div class="field">
+          <label>Largo (cm)</label>
+          <input type="number" id="inp-largo" inputmode="decimal" placeholder="0.0" step="0.1" min="0" oninput="updateCalc()">
+        </div>
+        <div class="field">
+          <label>Ancho (cm)</label>
+          <input type="number" id="inp-ancho" inputmode="decimal" placeholder="0.0" step="0.1" min="0" oninput="updateCalc()">
+        </div>
+        <div class="field">
+          <label>Alto (cm)</label>
+          <input type="number" id="inp-alto" inputmode="decimal" placeholder="0.0" step="0.1" min="0" oninput="updateCalc()">
+        </div>
+      </div>
+    </div>
+
+    <div class="calc-box" id="dim-preview" style="display:none;">
+      <div class="calc-row">
+        <span class="calc-key">Volumen</span>
+        <span class="calc-val" id="prev-vol">—</span>
+      </div>
+      <div class="calc-row">
+        <span class="calc-key">Peso volumétrico</span>
+        <span class="calc-val" id="prev-pvol">—</span>
+      </div>
+    </div>
+
+    <div class="alert alert-orange">
+      <strong>Tip:</strong> Medí el bulto como está embalado, incluyendo flejes o salientes.
+    </div>
+  </div>
+  <div class="bottom-bar">
+    <button class="btn btn-ghost btn-sm" style="width:auto;padding:14px 20px;" onclick="tryAR()">📷 Usar AR</button>
+    <button class="btn btn-primary" onclick="goToWeight()">Siguiente →</button>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════
+     SCREEN: WEIGHT + SAVE
+══════════════════════════════════════════ -->
+<div class="screen" id="screen-weight">
+  <div class="hdr">
+    <button class="hdr-back" onclick="showScreen('screen-measure')">←</button>
+    <div class="hdr-title">Peso y Confirmación</div>
+    <span class="hdr-badge" id="weight-guia-badge">—</span>
+  </div>
+  <div class="body">
+    <div class="steps">
+      <div class="step-dot done"></div>
+      <div class="step-dot done"></div>
+      <div class="step-dot active"></div>
+    </div>
+
+    <div class="card">
+      <div class="card-label" style="margin-bottom:10px;">Peso real medido en balanza</div>
+      <div class="field">
+        <input type="number" id="inp-peso" inputmode="decimal" placeholder="0.0" step="0.1" min="0" oninput="updateCalc()" style="font-size:38px;padding:18px;">
+      </div>
+      <div style="text-align:center;font-size:13px;color:var(--text2);margin-top:8px;">kilogramos (kg)</div>
+    </div>
+
+    <div class="calc-box">
+      <div class="card-label" style="margin-bottom:8px;">Cálculo automático</div>
+      <div class="calc-row">
+        <span class="calc-key">Dimensiones (L×A×H)</span>
+        <span class="calc-val" id="res-dims">—</span>
+      </div>
+      <div class="calc-row">
+        <span class="calc-key">Volumen</span>
+        <span class="calc-val" id="res-vol">—</span>
+      </div>
+      <div class="calc-row">
+        <span class="calc-key">Peso real</span>
+        <span class="calc-val" id="res-real">—</span>
+      </div>
+      <div class="calc-row">
+        <span class="calc-key">Peso volumétrico</span>
+        <span class="calc-val" id="res-pvol">—</span>
+      </div>
+      <div class="calc-row">
+        <span class="calc-key">⚖️ Peso facturable</span>
+        <span class="calc-val highlight" id="res-fact">—</span>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-label" style="margin-bottom:10px;">Datos adicionales</div>
+      <div style="display:flex;flex-direction:column;gap:12px;">
+        <div class="field">
+          <label>Zona de destino</label>
+          <select id="inp-zona">
+            <option value="">— Seleccionar —</option>
+            <option>Zona A</option>
+            <option>Zona B</option>
+            <option>Zona C</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Operario</label>
+          <input type="text" id="inp-operario" placeholder="Nombre del operario">
+        </div>
+        <div class="field">
+          <label>Observaciones</label>
+          <textarea id="inp-obs" placeholder="Ej: código ilegible, bulto dañado…"></textarea>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="bottom-bar">
+    <button class="btn btn-green" onclick="saveRecord()">
+      <span class="btn-icon">✓</span> Guardar y Continuar
+    </button>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════
+     SCREEN: RECORDS
+══════════════════════════════════════════ -->
+<div class="screen" id="screen-records">
+  <div class="hdr">
+    <button class="hdr-back" onclick="showScreen('screen-home')">←</button>
+    <div class="hdr-title">Registros del Turno</div>
+    <span class="hdr-badge" id="rec-count-badge">0</span>
+  </div>
+  <div class="body" id="records-list">
+    <div class="empty">
+      <div class="empty-icon">📭</div>
+      <div class="empty-text">Todavía no hay registros en este turno.</div>
+    </div>
+  </div>
+  <div class="bottom-bar" style="flex-direction:column;gap:10px;">
+    <button class="btn btn-green" onclick="exportCSV()">
+      <span class="btn-icon">📤</span> Exportar CSV para TMS
+    </button>
+    <button class="btn btn-ghost btn-sm" onclick="clearRecords()" style="color:var(--red);">
+      Borrar todos los registros del turno
+    </button>
+  </div>
+</div>
+
+<!-- ── Toast ── -->
+<div id="toast"></div>
+
+<!-- ══════════════════════════════════════════
+     JAVASCRIPT
+══════════════════════════════════════════ -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jsQR/1.4.0/jsQR.min.js" crossorigin="anonymous"></script>
+<script>
+// ── State ──────────────────────────────────────────────────
+const state = {
+  currentGuia: '',
+  largo: null, ancho: null, alto: null,
+  fromAR: false,
+  xrSupported: false,
+  xrSession: null,
+  xrRefSpace: null,
+  xrHitTestSource: null,
+  xrGL: null,
+  xrPoints: [],
+  xrCurrentHit: null,
+  xrFrame: null,
+  xrAnimFrame: null,
+  barcodeStream: null,
+  barcodeAnimFrame: null,
+  lastOperario: localStorage.getItem('lastOperario') || ''
+};
+
+// ── Screen management ──────────────────────────────────────
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  if (id === 'screen-home') updateHomeStats();
+  if (id === 'screen-records') renderRecords();
+}
+
+// ── Home stats ─────────────────────────────────────────────
+function updateHomeStats() {
+  const records = getRecords();
+  document.getElementById('stat-count').textContent = records.length;
+  const totalFact = records.reduce((s, r) => s + (r.facturable || 0), 0);
+  document.getElementById('stat-weight').textContent = totalFact.toFixed(1) + ' kg';
+}
+
+// ── Toast ──────────────────────────────────────────────────
+function toast(msg, duration = 2500) {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.classList.add('show');
+  setTimeout(() => el.classList.remove('show'), duration);
+}
+
+// ── Record storage ─────────────────────────────────────────
+function getRecords() {
+  try { return JSON.parse(localStorage.getItem('dimscan_records') || '[]'); }
+  catch { return []; }
+}
+function saveRecords(records) {
+  localStorage.setItem('dimscan_records', JSON.stringify(records));
+}
+
+// ── Start new record ───────────────────────────────────────
+function startNewRecord() {
+  state.currentGuia = '';
+  state.largo = null; state.ancho = null; state.alto = null;
+  state.fromAR = false;
+  startBarcode();
+}
+
+// ── Barcode scanner ────────────────────────────────────────
+function startBarcode() {
+  showScreen('screen-barcode');
+  const video = document.getElementById('barcode-video');
+  const canvas = document.getElementById('barcode-canvas');
+  const ctx = canvas.getContext('2d');
+
+  navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } })
+    .then(stream => {
+      state.barcodeStream = stream;
+      video.srcObject = stream;
+      video.play();
+      video.addEventListener('loadedmetadata', () => {
+        canvas.width = video.videoWidth;
+        canvas.height = video.videoHeight;
+        scanFrame();
+      });
+    })
+    .catch(() => {
+      toast('⚠ No se pudo acceder a la cámara');
+      enterBarcodeManual();
+    });
+
+  function scanFrame() {
+    if (video.readyState === video.HAVE_ENOUGH_DATA) {
+      ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+      const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+      const code = jsQR(imageData.data, imageData.width, imageData.height, {
+        inversionAttempts: 'dontInvert'
+      });
+      if (code && code.data) {
+        stopBarcode();
+        onBarcodeDetected(code.data);
+        return;
+      }
+    }
+    state.barcodeAnimFrame = requestAnimationFrame(scanFrame);
+  }
+}
+
+function stopBarcode() {
+  cancelAnimationFrame(state.barcodeAnimFrame);
+  if (state.barcodeStream) {
+    state.barcodeStream.getTracks().forEach(t => t.stop());
+    state.barcodeStream = null;
+  }
+}
+
+function onBarcodeDetected(code) {
+  state.currentGuia = code;
+  toast('✅ Código: ' + code);
+  document.getElementById('measure-guia-badge').textContent = code.slice(-8);
+  document.getElementById('weight-guia-badge').textContent = code.slice(-8);
+  tryAR();
+}
+
+function enterBarcodeManual() {
+  stopBarcode();
+  const guia = prompt('Ingresá el número de guía / remito:');
+  if (guia && guia.trim()) {
+    onBarcodeDetected(guia.trim());
+  } else {
+    showScreen('screen-home');
+  }
+}
+
+// ── AR Measurement ─────────────────────────────────────────
+async function checkARSupport() {
+  const card = document.getElementById('xr-status-card');
+  const txt  = document.getElementById('xr-status-text');
+  if (!navigator.xr) {
+    txt.innerHTML = '❌ <strong>AR no disponible.</strong> Usá Chrome para Android y asegurate de que Google Play Services for AR esté instalado.';
+    state.xrSupported = false; return;
+  }
+  try {
+    const ok = await navigator.xr.isSessionSupported('immersive-ar');
+    if (ok) {
+      txt.innerHTML = '✅ <strong>ARCore listo.</strong> Podés medir con la cámara automáticamente.';
+      state.xrSupported = true;
+    } else {
+      txt.innerHTML = '⚠ <strong>ARCore no activo en este dispositivo.</strong> Podés usar medición manual.';
+      state.xrSupported = false;
+    }
+  } catch {
+    txt.innerHTML = '⚠ <strong>No se pudo verificar ARCore.</strong> La app funciona con medición manual.';
+    state.xrSupported = false;
+  }
+}
+
+async function tryAR() {
+  // Prefill manual fields
+  document.getElementById('inp-largo').value = '';
+  document.getElementById('inp-ancho').value = '';
+  document.getElementById('inp-alto').value = '';
+  document.getElementById('ar-prefill-note').style.display = 'none';
+  document.getElementById('dim-preview').style.display = 'none';
+  document.getElementById('inp-operario').value = state.lastOperario;
+
+  if (!state.xrSupported) {
+    showScreen('screen-measure');
+    return;
+  }
+  // Try to start AR
+  showScreen('screen-ar');
+  await startAR();
+}
+
+async function startAR() {
+  // Reset AR state
+  state.xrPoints = [];
+  state.xrCurrentHit = null;
+  updateARUI(0);
+
+  const canvas = document.getElementById('ar-canvas');
+  const gl = canvas.getContext('webgl', { xrCompatible: true });
+  if (!gl) { fallbackToManual(); return; }
+  state.xrGL = gl;
+
+  try {
+    const session = await navigator.xr.requestSession('immersive-ar', {
+      requiredFeatures: ['hit-test'],
+      optionalFeatures: ['dom-overlay', 'local-floor'],
+      domOverlay: { root: document.getElementById('ar-overlay') }
+    });
+    state.xrSession = session;
+    await gl.makeXRCompatible();
+    session.updateRenderState({ baseLayer: new XRWebGLLayer(session, gl) });
+
+    const viewerSpace = await session.requestReferenceSpace('viewer');
+    state.xrRefSpace  = await session.requestReferenceSpace('local');
+    state.xrHitTestSource = await session.requestHitTestSource({ space: viewerSpace });
+
+    session.addEventListener('end', () => { state.xrSession = null; });
+    session.requestAnimationFrame(arFrame);
+  } catch (e) {
+    toast('⚠ No se pudo iniciar AR: ' + e.message);
+    fallbackToManual();
+  }
+}
+
+function arFrame(time, xrFrame) {
+  if (!state.xrSession) return;
+  state.xrFrame = xrFrame;
+  state.xrSession.requestAnimationFrame(arFrame);
+
+  const gl = state.xrGL;
+  const layer = state.xrSession.renderState.baseLayer;
+  gl.bindFramebuffer(gl.FRAMEBUFFER, layer.framebuffer);
+  gl.clearColor(0, 0, 0, 0);
+  gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+
+  if (state.xrHitTestSource && state.xrPoints.length < 3) {
+    const hits = xrFrame.getHitTestResults(state.xrHitTestSource);
+    if (hits.length > 0) {
+      const pose = hits[0].getPose(state.xrRefSpace);
+      state.xrCurrentHit = { ...pose.transform.position };
+    }
+  }
+}
+
+function arTap() {
+  if (state.xrPoints.length >= 3) return;
+  if (!state.xrCurrentHit) { toast('⚠ Apuntá al suelo y esperá que el AR detecte la superficie'); return; }
+
+  state.xrPoints.push({ ...state.xrCurrentHit });
+  const n = state.xrPoints.length;
+  updateARUI(n);
+
+  if (n === 3) {
+    // Calculate L and W
+    const p = state.xrPoints;
+    const d = (a, b) => Math.sqrt(
+      Math.pow(b.x-a.x,2) + Math.pow(b.y-a.y,2) + Math.pow(b.z-a.z,2)
+    ) * 100;
+    const d12 = d(p[0], p[1]);
+    const d13 = d(p[0], p[2]);
+    const largo = Math.max(d12, d13).toFixed(1);
+    const ancho = Math.min(d12, d13).toFixed(1);
+
+    document.getElementById('ar-r-largo').textContent = largo + ' cm';
+    document.getElementById('ar-r-ancho').textContent = ancho + ' cm';
+    document.getElementById('ar-result-box').style.display = 'block';
+    document.getElementById('ar-tap-btn').style.display = 'none';
+
+    state.arLargo = parseFloat(largo);
+    state.arAncho = parseFloat(ancho);
+  }
+}
+
+function updateARUI(step) {
+  const labels = [
+    ['Paso 1 de 3', 'Apuntá al suelo y tocá la primera esquina de la base del bulto.'],
+    ['Paso 2 de 3', 'Ahora tocá la segunda esquina (lado más largo del bulto).'],
+    ['Paso 3 de 3', 'Tocá la tercera esquina (lado perpendicular al anterior).'],
+    ['¡Listo!', 'Largo y ancho calculados. Confirmá para continuar.'],
+  ];
+  const [lbl, txt] = labels[Math.min(step, 3)];
+  document.getElementById('ar-step-label').textContent = lbl;
+  document.getElementById('ar-step-text').innerHTML = txt;
+
+  ['ar-pt-1','ar-pt-2','ar-pt-3'].forEach((id, i) => {
+    const el = document.getElementById(id);
+    el.classList.remove('done','active');
+    if (i < step) el.classList.add('done');
+    else if (i === step) el.classList.add('active');
+  });
+}
+
+function confirmARMeasure() {
+  stopAR();
+  document.getElementById('inp-largo').value = state.arLargo;
+  document.getElementById('inp-ancho').value = state.arAncho;
+  document.getElementById('inp-alto').value = '';
+  document.getElementById('ar-prefill-note').style.display = 'block';
+  state.fromAR = true;
+  state.largo = state.arLargo;
+  state.ancho = state.arAncho;
+  showScreen('screen-measure');
+  document.getElementById('inp-alto').focus();
+}
+
+function stopAR() {
+  if (state.xrSession) {
+    state.xrSession.end().catch(() => {});
+    state.xrSession = null;
+  }
+}
+
+function fallbackToManual() {
+  stopAR();
+  showScreen('screen-measure');
+}
+
+// ── Dimensions screen ──────────────────────────────────────
+function updateCalc() {
+  const L = parseFloat(document.getElementById('inp-largo').value) || 0;
+  const A = parseFloat(document.getElementById('inp-ancho').value) || 0;
+  const H = parseFloat(document.getElementById('inp-alto').value) || 0;
+  const P = parseFloat(document.getElementById('inp-peso')?.value) || 0;
+
+  if (L && A && H) {
+    const vol = L * A * H;
+    const pvol = vol / 4000;
+    const fact = P ? Math.max(P, pvol) : pvol;
+
+    // Preview on measure screen
+    const prev = document.getElementById('dim-preview');
+    if (prev) {
+      prev.style.display = 'block';
+      document.getElementById('prev-vol').textContent = Math.round(vol).toLocaleString('es-AR') + ' cm³';
+      document.getElementById('prev-pvol').textContent = pvol.toFixed(2) + ' kg';
+    }
+
+    // Summary on weight screen
+    const d = (id, v) => { const el = document.getElementById(id); if (el) el.textContent = v; };
+    d('res-dims', L + ' × ' + A + ' × ' + H + ' cm');
+    d('res-vol', Math.round(vol).toLocaleString('es-AR') + ' cm³');
+    d('res-real', P ? P.toFixed(1) + ' kg' : '—');
+    d('res-pvol', pvol.toFixed(2) + ' kg');
+    d('res-fact', P ? fact.toFixed(2) + ' kg' : pvol.toFixed(2) + ' kg *');
+  }
+}
+
+function goToWeight() {
+  const L = parseFloat(document.getElementById('inp-largo').value);
+  const A = parseFloat(document.getElementById('inp-ancho').value);
+  const H = parseFloat(document.getElementById('inp-alto').value);
+  if (!L || !A || !H) { toast('⚠ Completá las tres dimensiones'); return; }
+  state.largo = L; state.ancho = A; state.alto = H;
+  updateCalc();
+  showScreen('screen-weight');
+  document.getElementById('inp-peso').focus();
+}
+
+// ── Save record ────────────────────────────────────────────
+function saveRecord() {
+  const peso = parseFloat(document.getElementById('inp-peso').value);
+  if (!peso) { toast('⚠ Ingresá el peso real'); return; }
+  if (!state.largo || !state.ancho || !state.alto) { toast('⚠ Faltan dimensiones'); return; }
+
+  const operario = document.getElementById('inp-operario').value.trim();
+  state.lastOperario = operario;
+  localStorage.setItem('lastOperario', operario);
+
+  const vol  = state.largo * state.ancho * state.alto;
+  const pvol = vol / 4000;
+  const fact = Math.max(peso, pvol);
+
+  const record = {
+    id: Date.now(),
+    guia: state.currentGuia || 'Manual',
+    fecha: new Date().toLocaleString('es-AR'),
+    largo: state.largo, ancho: state.ancho, alto: state.alto,
+    pesoReal: peso, pesoVol: parseFloat(pvol.toFixed(2)),
+    facturable: parseFloat(fact.toFixed(2)),
+    zona: document.getElementById('inp-zona').value,
+    operario,
+    obs: document.getElementById('inp-obs').value.trim(),
+    fromAR: state.fromAR
+  };
+
+  const records = getRecords();
+  records.push(record);
+  saveRecords(records);
+
+  toast('✅ Bulto ' + records.length + ' guardado – ' + fact.toFixed(2) + ' kg fact.');
+
+  // Reset for next
+  state.currentGuia = '';
+  state.largo = null; state.ancho = null; state.alto = null; state.fromAR = false;
+  document.getElementById('inp-largo').value = '';
+  document.getElementById('inp-ancho').value = '';
+  document.getElementById('inp-alto').value = '';
+  document.getElementById('inp-peso').value = '';
+  document.getElementById('inp-obs').value = '';
+  document.getElementById('inp-zona').value = '';
+  document.getElementById('res-dims').textContent = '—';
+  document.getElementById('res-vol').textContent = '—';
+  document.getElementById('res-real').textContent = '—';
+  document.getElementById('res-pvol').textContent = '—';
+  document.getElementById('res-fact').textContent = '—';
+
+  showScreen('screen-home');
+}
+
+// ── Records screen ─────────────────────────────────────────
+function renderRecords() {
+  const records = getRecords();
+  const container = document.getElementById('records-list');
+  document.getElementById('rec-count-badge').textContent = records.length;
+
+  if (!records.length) {
+    container.innerHTML = `<div class="empty"><div class="empty-icon">📭</div><div class="empty-text">Todavía no hay registros en este turno.</div></div>`;
+    return;
+  }
+
+  container.innerHTML = records.slice().reverse().map(r => `
+    <div class="record-item">
+      <div class="record-top">
+        <div>
+          <div class="record-guia">${r.guia}</div>
+          <div class="record-date">${r.fecha}${r.operario ? ' · ' + r.operario : ''}</div>
+        </div>
+        <button class="record-del" onclick="deleteRecord(${r.id})">🗑</button>
+      </div>
+      <div class="record-dims">${r.largo} × ${r.ancho} × ${r.alto} cm · Real: ${r.pesoReal} kg · Vol: ${r.pesoVol} kg${r.zona ? ' · ' + r.zona : ''}${r.fromAR ? ' <span class="tag tag-blue">AR</span>' : ''}</div>
+      <div style="display:flex;justify-content:space-between;align-items:center;">
+        <div class="record-fact">Facturable: ${r.facturable} kg</div>
+        ${r.obs ? `<div style="font-size:11px;color:var(--text2);max-width:150px;text-align:right;">${r.obs}</div>` : ''}
+      </div>
+    </div>
+  `).join('');
+}
+
+function deleteRecord(id) {
+  if (!confirm('¿Borrar este registro?')) return;
+  const records = getRecords().filter(r => r.id !== id);
+  saveRecords(records);
+  renderRecords();
+  document.getElementById('rec-count-badge').textContent = records.length;
+}
+
+function clearRecords() {
+  if (!confirm('¿Borrar TODOS los registros del turno? Esta acción no se puede deshacer.')) return;
+  saveRecords([]);
+  renderRecords();
+  toast('Registros eliminados');
+}
+
+// ── CSV Export ─────────────────────────────────────────────
+function exportCSV() {
+  const records = getRecords();
+  if (!records.length) { toast('⚠ No hay registros para exportar'); return; }
+
+  const headers = ['Fecha','N_Guia','Operario','Largo_cm','Ancho_cm','Alto_cm','Peso_Real_kg','Peso_Vol_kg','Peso_Facturable_kg','Zona','Medicion_AR','Observaciones'];
+  const rows = records.map(r => [
+    r.fecha, r.guia, r.operario,
+    r.largo, r.ancho, r.alto,
+    r.pesoReal, r.pesoVol, r.facturable,
+    r.zona, r.fromAR ? 'SI' : 'NO', r.obs
+  ].map(v => `"${String(v||'').replace(/"/g,'""')}"`).join(','));
+
+  const csv = [headers.join(','), ...rows].join('\n');
+  const blob = new Blob(['﻿' + csv], { type: 'text/csv;charset=utf-8;' });
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement('a');
+  const date = new Date().toISOString().split('T')[0];
+  a.href = url;
+  a.download = `DimScan_CrossDock_${date}.csv`;
+  a.click();
+  URL.revokeObjectURL(url);
+  toast('✅ CSV exportado – ' + records.length + ' registros');
+}
+
+// ── Init ───────────────────────────────────────────────────
+checkARSupport();
+updateHomeStats();
+</script>
+</body>
+</html>
