@@ -227,10 +227,10 @@ html,body{height:100%;width:100%;overflow:hidden;background:var(--bg);color:var(
   </div>
   <div class="bottom-bar" style="flex-direction:column;gap:10px;">
     <button class="btn btn-primary" onclick="startNewRecord()">
-      <span class="btn-icon">📦</span> Nuevo Registro
+      <span class="btn-icon">📦</span> Nuevo Remito
     </button>
     <button class="btn btn-ghost" onclick="showScreen('screen-records')">
-      <span class="btn-icon">📋</span> Ver Registros del Turno
+      <span class="btn-icon">📋</span> Ver Remitos del Turno
     </button>
   </div>
 </div>
@@ -254,6 +254,59 @@ html,body{height:100%;width:100%;overflow:hidden;background:var(--bg);color:var(
   <div class="scan-btns">
     <button class="btn btn-ghost btn-sm" style="flex:1" onclick="stopBarcode();showScreen('screen-home')">Cancelar</button>
     <button class="btn btn-ghost btn-sm" style="flex:1" onclick="enterBarcodeManual()">Manual</button>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════
+     SCREEN: REMITO SETUP (cantidad bultos + zona + operario)
+══════════════════════════════════════════ -->
+<div class="screen" id="screen-remito-setup">
+  <div class="hdr">
+    <button class="hdr-back" onclick="cancelRemito()">←</button>
+    <div class="hdr-title">Nuevo remito</div>
+    <span class="hdr-badge" id="setup-guia-badge">—</span>
+  </div>
+  <div class="body">
+    <div class="card">
+      <div class="card-label">Remito / Guía</div>
+      <div class="card-value" id="setup-guia-text" style="font-size:20px;word-break:break-all;">—</div>
+    </div>
+
+    <div class="card">
+      <div class="card-label" style="margin-bottom:10px;">Cantidad de bultos a cargar</div>
+      <div class="field">
+        <input type="number" id="setup-cant-bultos" inputmode="numeric" min="1" max="999" step="1" value="1" placeholder="1" style="font-size:38px;padding:18px;">
+      </div>
+      <div style="text-align:center;font-size:13px;color:var(--text2);margin-top:8px;">vas a cargar uno por uno</div>
+    </div>
+
+    <div class="card">
+      <div class="card-label" style="margin-bottom:10px;">Datos del remito</div>
+      <div style="display:flex;flex-direction:column;gap:12px;">
+        <div class="field">
+          <label>Operario</label>
+          <input type="text" id="setup-operario" placeholder="Nombre del operario">
+        </div>
+        <div class="field">
+          <label>Zona de destino</label>
+          <select id="setup-zona">
+            <option value="">— Seleccionar —</option>
+            <option>Zona A</option>
+            <option>Zona B</option>
+            <option>Zona C</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <div class="alert alert-blue">
+      <strong>Tip:</strong> Estos datos se aplican a todos los bultos del remito. Las observaciones se cargan por bulto.
+    </div>
+  </div>
+  <div class="bottom-bar">
+    <button class="btn btn-primary" onclick="startRemitoFlow()">
+      <span class="btn-icon">▶</span> Comenzar carga
+    </button>
   </div>
 </div>
 
@@ -301,8 +354,8 @@ html,body{height:100%;width:100%;overflow:hidden;background:var(--bg);color:var(
 ══════════════════════════════════════════ -->
 <div class="screen" id="screen-measure">
   <div class="hdr">
-    <button class="hdr-back" onclick="showScreen('screen-home')">←</button>
-    <div class="hdr-title">Dimensiones del Bulto</div>
+    <button class="hdr-back" onclick="cancelRemito()">←</button>
+    <div class="hdr-title" id="measure-title">Dimensiones del Bulto</div>
     <span class="hdr-badge" id="measure-guia-badge">—</span>
   </div>
   <div class="body">
@@ -361,7 +414,7 @@ html,body{height:100%;width:100%;overflow:hidden;background:var(--bg);color:var(
 <div class="screen" id="screen-weight">
   <div class="hdr">
     <button class="hdr-back" onclick="showScreen('screen-measure')">←</button>
-    <div class="hdr-title">Peso y Confirmación</div>
+    <div class="hdr-title" id="weight-title">Peso y Confirmación</div>
     <span class="hdr-badge" id="weight-guia-badge">—</span>
   </div>
   <div class="body">
@@ -404,25 +457,9 @@ html,body{height:100%;width:100%;overflow:hidden;background:var(--bg);color:var(
     </div>
 
     <div class="card">
-      <div class="card-label" style="margin-bottom:10px;">Datos adicionales</div>
-      <div style="display:flex;flex-direction:column;gap:12px;">
-        <div class="field">
-          <label>Zona de destino</label>
-          <select id="inp-zona">
-            <option value="">— Seleccionar —</option>
-            <option>Zona A</option>
-            <option>Zona B</option>
-            <option>Zona C</option>
-          </select>
-        </div>
-        <div class="field">
-          <label>Operario</label>
-          <input type="text" id="inp-operario" placeholder="Nombre del operario">
-        </div>
-        <div class="field">
-          <label>Observaciones</label>
-          <textarea id="inp-obs" placeholder="Ej: código ilegible, bulto dañado…"></textarea>
-        </div>
+      <div class="card-label" style="margin-bottom:10px;">Observaciones de este bulto</div>
+      <div class="field">
+        <textarea id="inp-obs" placeholder="Ej: bulto dañado, embalaje irregular… (opcional)"></textarea>
       </div>
     </div>
   </div>
@@ -439,7 +476,7 @@ html,body{height:100%;width:100%;overflow:hidden;background:var(--bg);color:var(
 <div class="screen" id="screen-records">
   <div class="hdr">
     <button class="hdr-back" onclick="showScreen('screen-home')">←</button>
-    <div class="hdr-title">Registros del Turno</div>
+    <div class="hdr-title">Remitos del Turno</div>
     <span class="hdr-badge" id="rec-count-badge">0</span>
   </div>
   <div class="body" id="records-list">
@@ -454,6 +491,57 @@ html,body{height:100%;width:100%;overflow:hidden;background:var(--bg);color:var(
     </button>
     <button class="btn btn-ghost btn-sm" onclick="clearRecords()" style="color:var(--red);">
       Borrar todos los registros del turno
+    </button>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════
+     SCREEN: REMITO SUMMARY (al cerrar el remito)
+══════════════════════════════════════════ -->
+<div class="screen" id="screen-remito-summary">
+  <div class="hdr" style="background:var(--green);">
+    <div class="hdr-title">✓ Remito completo</div>
+  </div>
+  <div class="body">
+    <div class="alert alert-green">
+      <strong>Remito cerrado correctamente.</strong> Datos guardados localmente. Acordate de exportar el CSV al cierre del turno.
+    </div>
+
+    <div class="card">
+      <div class="card-label">Remito</div>
+      <div class="card-value" id="summary-guia" style="font-size:20px;word-break:break-all;">—</div>
+    </div>
+
+    <div class="stat-row">
+      <div class="card">
+        <div class="card-label">Bultos</div>
+        <div class="card-value" id="summary-bultos">0</div>
+      </div>
+      <div class="card">
+        <div class="card-label">Peso facturable</div>
+        <div class="card-value" id="summary-fact" style="font-size:22px;">0 kg</div>
+      </div>
+    </div>
+
+    <div class="calc-box">
+      <div class="calc-row"><span class="calc-key">Peso real total</span><span class="calc-val" id="summary-real">—</span></div>
+      <div class="calc-row"><span class="calc-key">Peso volumétrico total</span><span class="calc-val" id="summary-pvol">—</span></div>
+      <div class="calc-row"><span class="calc-key">Volumen total</span><span class="calc-val" id="summary-vol">—</span></div>
+      <div class="calc-row"><span class="calc-key">Operario</span><span class="calc-val" id="summary-op">—</span></div>
+      <div class="calc-row"><span class="calc-key">Zona</span><span class="calc-val" id="summary-zona">—</span></div>
+    </div>
+
+    <div class="card">
+      <div class="card-label" style="margin-bottom:8px;">Detalle de bultos</div>
+      <div id="summary-bultos-list" style="display:flex;flex-direction:column;gap:8px;"></div>
+    </div>
+  </div>
+  <div class="bottom-bar" style="flex-direction:column;gap:10px;">
+    <button class="btn btn-primary" onclick="startNewRecord()">
+      <span class="btn-icon">📦</span> Cargar otro remito
+    </button>
+    <button class="btn btn-ghost" onclick="showScreen('screen-home')">
+      Volver al inicio
     </button>
   </div>
 </div>
@@ -473,13 +561,16 @@ html,body{height:100%;width:100%;overflow:hidden;background:var(--bg);color:var(
 <script src="https://cdn.jsdelivr.net/npm/@zxing/library@0.21.3/umd/index.min.js"></script>
 <script>
 // ── Build version (cambiá este string cada vez que subís cambios) ──
-const BUILD_VERSION = '2026-05-16-27';
+const BUILD_VERSION = '2026-05-16-48';
 
 // ── State ──────────────────────────────────────────────────
 const state = {
-  currentGuia: '',
+  // Remito en curso
+  remito: null,        // { id, guia, totalBultos, bultoActual, operario, zona, fecha, bultos: [] }
+  // Bulto en curso (acumula medidas/peso del bulto que se está cargando)
   largo: null, ancho: null, alto: null,
   fromAR: false,
+  // AR / WebXR
   xrSupported: false,
   xrSession: null,
   xrRefSpace: null,
@@ -489,12 +580,14 @@ const state = {
   xrCurrentHit: null,
   xrFrame: null,
   xrAnimFrame: null,
+  // Barcode
   barcodeStream: null,
   barcodeReader: null,
   barcodeTrack: null,
   torchOn: false,
   currentZoom: 1,
-  lastOperario: localStorage.getItem('lastOperario') || ''
+  lastOperario: localStorage.getItem('lastOperario') || '',
+  lastZona:     localStorage.getItem('lastZona') || ''
 };
 
 // ── Screen management ──────────────────────────────────────
@@ -508,9 +601,24 @@ function showScreen(id) {
 // ── Home stats ─────────────────────────────────────────────
 function updateHomeStats() {
   const records = getRecords();
-  document.getElementById('stat-count').textContent = records.length;
-  const totalFact = records.reduce((s, r) => s + (r.facturable || 0), 0);
+  // Soporte mixto: records nuevos (remitos) y antiguos (bultos sueltos)
+  let totalBultos = 0;
+  let totalFact = 0;
+  records.forEach(r => {
+    if (r.bultos && Array.isArray(r.bultos)) {
+      totalBultos += r.bultos.length;
+      totalFact   += r.bultos.reduce((s,b) => s + (b.facturable || 0), 0);
+    } else {
+      // Legacy: bulto suelto
+      totalBultos += 1;
+      totalFact   += (r.facturable || 0);
+    }
+  });
+  document.getElementById('stat-count').textContent = totalBultos;
   document.getElementById('stat-weight').textContent = totalFact.toFixed(1) + ' kg';
+  // Sub-label: cantidad de remitos
+  const sub = document.querySelector('#screen-home .stat-row .card:first-child .card-sub');
+  if (sub) sub.textContent = totalBultos + ' bultos · ' + records.length + ' remitos';
 }
 
 // ── Toast ──────────────────────────────────────────────────
@@ -530,11 +638,11 @@ function saveRecords(records) {
   localStorage.setItem('dimscan_records', JSON.stringify(records));
 }
 
-// ── Start new record ───────────────────────────────────────
+// ── Start new remito ───────────────────────────────────────
 function startNewRecord() {
-  state.currentGuia = '';
-  state.largo = null; state.ancho = null; state.alto = null;
-  state.fromAR = false;
+  state.remito = null;
+  state._pendingGuia = null;
+  resetBultoForm();
   startBarcode();
 }
 
@@ -700,11 +808,8 @@ function stopBarcode() {
 }
 
 function onBarcodeDetected(code) {
-  state.currentGuia = code;
   toast('✅ Código: ' + code);
-  document.getElementById('measure-guia-badge').textContent = code.slice(-8);
-  document.getElementById('weight-guia-badge').textContent = code.slice(-8);
-  tryAR();
+  goToRemitoSetup(code);
 }
 
 function enterBarcodeManual() {
@@ -715,6 +820,88 @@ function enterBarcodeManual() {
   } else {
     showScreen('screen-home');
   }
+}
+
+// ── Setup del remito (cantidad de bultos + datos comunes) ──
+function goToRemitoSetup(guia) {
+  // Crear remito tentativo (todavía sin confirmar cantidad)
+  document.getElementById('setup-guia-text').textContent = guia;
+  document.getElementById('setup-guia-badge').textContent = guia.slice(-8);
+  document.getElementById('setup-cant-bultos').value = '1';
+  document.getElementById('setup-operario').value = state.lastOperario || '';
+  document.getElementById('setup-zona').value = state.lastZona || '';
+  // Guardar guía pendiente para que startRemitoFlow la lea
+  state._pendingGuia = guia;
+  showScreen('screen-remito-setup');
+  setTimeout(() => document.getElementById('setup-cant-bultos').focus(), 200);
+}
+
+function startRemitoFlow() {
+  const cant = parseInt(document.getElementById('setup-cant-bultos').value, 10);
+  const operario = document.getElementById('setup-operario').value.trim();
+  const zona = document.getElementById('setup-zona').value;
+
+  if (!cant || cant < 1) { toast('⚠ Ingresá una cantidad válida de bultos'); return; }
+  if (cant > 999) { toast('⚠ Cantidad máxima: 999'); return; }
+  if (!operario) { toast('⚠ Cargá el nombre del operario'); return; }
+
+  // Persistir defaults para próximo remito
+  state.lastOperario = operario;
+  state.lastZona = zona;
+  localStorage.setItem('lastOperario', operario);
+  localStorage.setItem('lastZona', zona);
+
+  // Inicializar remito
+  state.remito = {
+    id: Date.now(),
+    guia: state._pendingGuia || 'Manual',
+    totalBultos: cant,
+    bultoActual: 1,
+    operario,
+    zona,
+    fecha: new Date().toLocaleString('es-AR'),
+    bultos: []
+  };
+  state._pendingGuia = null;
+
+  // Limpiar estado del bulto
+  resetBultoForm();
+  updateBultoHeaders();
+  tryAR();
+}
+
+function cancelRemito() {
+  if (state.remito && state.remito.bultos.length > 0) {
+    if (!confirm('Hay ' + state.remito.bultos.length + ' bulto(s) cargado(s) sin cerrar el remito. ¿Cancelar de todos modos?')) return;
+  }
+  state.remito = null;
+  state._pendingGuia = null;
+  resetBultoForm();
+  showScreen('screen-home');
+}
+
+function resetBultoForm() {
+  state.largo = null; state.ancho = null; state.alto = null; state.fromAR = false;
+  ['inp-largo','inp-ancho','inp-alto','inp-peso','inp-obs'].forEach(id => {
+    const el = document.getElementById(id); if (el) el.value = '';
+  });
+  ['res-dims','res-vol','res-real','res-pvol','res-fact'].forEach(id => {
+    const el = document.getElementById(id); if (el) el.textContent = '—';
+  });
+  const prev = document.getElementById('dim-preview'); if (prev) prev.style.display = 'none';
+  const note = document.getElementById('ar-prefill-note'); if (note) note.style.display = 'none';
+}
+
+function updateBultoHeaders() {
+  if (!state.remito) return;
+  const r = state.remito;
+  const label = 'Bulto ' + r.bultoActual + ' de ' + r.totalBultos;
+  const mt = document.getElementById('measure-title');
+  const wt = document.getElementById('weight-title');
+  if (mt) mt.textContent = label + ' – Medidas';
+  if (wt) wt.textContent = label + ' – Peso';
+  document.getElementById('measure-guia-badge').textContent = r.guia.slice(-8);
+  document.getElementById('weight-guia-badge').textContent = r.guia.slice(-8);
 }
 
 // ── AR Measurement ─────────────────────────────────────────
@@ -741,19 +928,17 @@ async function checkARSupport() {
 }
 
 async function tryAR() {
-  // Prefill manual fields
+  // Limpiar campos del bulto en curso (no del remito)
   document.getElementById('inp-largo').value = '';
   document.getElementById('inp-ancho').value = '';
   document.getElementById('inp-alto').value = '';
   document.getElementById('ar-prefill-note').style.display = 'none';
   document.getElementById('dim-preview').style.display = 'none';
-  document.getElementById('inp-operario').value = state.lastOperario;
 
   if (!state.xrSupported) {
     showScreen('screen-measure');
     return;
   }
-  // Try to start AR
   showScreen('screen-ar');
   await startAR();
 }
@@ -990,84 +1175,147 @@ function goToWeight() {
   document.getElementById('inp-peso').focus();
 }
 
-// ── Save record ────────────────────────────────────────────
+// ── Save bulto (cicla por todos los bultos del remito) ─────
 function saveRecord() {
+  if (!state.remito) { toast('⚠ No hay remito activo'); showScreen('screen-home'); return; }
   const peso = parseFloat(document.getElementById('inp-peso').value);
-  if (!peso) { toast('⚠ Ingresá el peso real'); return; }
+  if (!peso || isNaN(peso)) { toast('⚠ Ingresá el peso real'); return; }
   if (!state.largo || !state.ancho || !state.alto) { toast('⚠ Faltan dimensiones'); return; }
 
-  const operario = document.getElementById('inp-operario').value.trim();
-  state.lastOperario = operario;
-  localStorage.setItem('lastOperario', operario);
-
+  const r = state.remito;
   const vol  = state.largo * state.ancho * state.alto;
   const pvol = vol / 4000;
   const fact = Math.max(peso, pvol);
 
-  const record = {
-    id: Date.now(),
-    guia: state.currentGuia || 'Manual',
-    fecha: new Date().toLocaleString('es-AR'),
+  const bulto = {
+    nro: r.bultoActual,
     largo: state.largo, ancho: state.ancho, alto: state.alto,
-    pesoReal: peso, pesoVol: parseFloat(pvol.toFixed(2)),
+    pesoReal: peso,
+    pesoVol: parseFloat(pvol.toFixed(2)),
     facturable: parseFloat(fact.toFixed(2)),
-    zona: document.getElementById('inp-zona').value,
-    operario,
+    volumen: parseFloat(vol.toFixed(0)),
     obs: document.getElementById('inp-obs').value.trim(),
     fromAR: state.fromAR
   };
+  r.bultos.push(bulto);
 
-  const records = getRecords();
-  records.push(record);
-  saveRecords(records);
-
-  toast('✅ Bulto ' + records.length + ' guardado – ' + fact.toFixed(2) + ' kg fact.');
-
-  // Reset for next
-  state.currentGuia = '';
-  state.largo = null; state.ancho = null; state.alto = null; state.fromAR = false;
-  document.getElementById('inp-largo').value = '';
-  document.getElementById('inp-ancho').value = '';
-  document.getElementById('inp-alto').value = '';
-  document.getElementById('inp-peso').value = '';
-  document.getElementById('inp-obs').value = '';
-  document.getElementById('inp-zona').value = '';
-  document.getElementById('res-dims').textContent = '—';
-  document.getElementById('res-vol').textContent = '—';
-  document.getElementById('res-real').textContent = '—';
-  document.getElementById('res-pvol').textContent = '—';
-  document.getElementById('res-fact').textContent = '—';
-
-  showScreen('screen-home');
+  if (r.bultoActual < r.totalBultos) {
+    // Próximo bulto: limpiar form, mismo remito
+    toast('✓ Bulto ' + r.bultoActual + '/' + r.totalBultos + ' guardado – Sigue el bulto ' + (r.bultoActual + 1));
+    r.bultoActual++;
+    resetBultoForm();
+    updateBultoHeaders();
+    // Si AR está soportado, ofrecer medición AR para el próximo bulto, si no ir a manual
+    tryAR();
+  } else {
+    // Último bulto: cerrar remito
+    closeRemito();
+  }
 }
 
-// ── Records screen ─────────────────────────────────────────
+function closeRemito() {
+  const r = state.remito;
+  if (!r) { showScreen('screen-home'); return; }
+
+  // Persistir el remito completo en localStorage
+  const records = getRecords();
+  records.push(JSON.parse(JSON.stringify(r))); // copia profunda
+  saveRecords(records);
+
+  // Mostrar pantalla de resumen
+  renderRemitoSummary(r);
+  toast('✅ Remito completo: ' + r.bultos.length + ' bulto(s)');
+
+  // Limpiar estado
+  state.remito = null;
+  resetBultoForm();
+}
+
+function renderRemitoSummary(r) {
+  const totalReal = r.bultos.reduce((s,b) => s + b.pesoReal, 0);
+  const totalPvol = r.bultos.reduce((s,b) => s + b.pesoVol, 0);
+  const totalFact = r.bultos.reduce((s,b) => s + b.facturable, 0);
+  const totalVol  = r.bultos.reduce((s,b) => s + b.volumen, 0);
+
+  document.getElementById('summary-guia').textContent  = r.guia;
+  document.getElementById('summary-bultos').textContent = r.bultos.length;
+  document.getElementById('summary-fact').textContent  = totalFact.toFixed(2) + ' kg';
+  document.getElementById('summary-real').textContent  = totalReal.toFixed(2) + ' kg';
+  document.getElementById('summary-pvol').textContent  = totalPvol.toFixed(2) + ' kg';
+  document.getElementById('summary-vol').textContent   = Math.round(totalVol).toLocaleString('es-AR') + ' cm³';
+  document.getElementById('summary-op').textContent    = r.operario || '—';
+  document.getElementById('summary-zona').textContent  = r.zona || '—';
+
+  const list = document.getElementById('summary-bultos-list');
+  list.innerHTML = r.bultos.map(b => `
+    <div style="background:var(--surface2);border-radius:10px;padding:10px 12px;display:flex;justify-content:space-between;align-items:center;font-size:13px;">
+      <div>
+        <div style="font-weight:700;color:var(--accent);">Bulto ${b.nro}</div>
+        <div style="color:var(--text2);font-size:12px;">${b.largo}×${b.ancho}×${b.alto} cm · ${b.pesoReal} kg real</div>
+      </div>
+      <div style="text-align:right;">
+        <div style="font-weight:700;color:var(--green);">${b.facturable.toFixed(2)} kg</div>
+        ${b.fromAR ? '<div style="font-size:10px;color:var(--accent);">AR</div>' : ''}
+      </div>
+    </div>
+  `).join('');
+
+  showScreen('screen-remito-summary');
+}
+
+// ── Records screen (agrupado por remito) ───────────────────
 function renderRecords() {
   const records = getRecords();
   const container = document.getElementById('records-list');
   document.getElementById('rec-count-badge').textContent = records.length;
 
   if (!records.length) {
-    container.innerHTML = `<div class="empty"><div class="empty-icon">📭</div><div class="empty-text">Todavía no hay registros en este turno.</div></div>`;
+    container.innerHTML = `<div class="empty"><div class="empty-icon">📭</div><div class="empty-text">Todavía no hay remitos cargados en este turno.</div></div>`;
     return;
   }
 
-  container.innerHTML = records.slice().reverse().map(r => `
-    <div class="record-item">
-      <div class="record-top">
-        <div>
-          <div class="record-guia">${r.guia}</div>
-          <div class="record-date">${r.fecha}${r.operario ? ' · ' + r.operario : ''}</div>
+  container.innerHTML = records.slice().reverse().map(r => {
+    // Soporte legacy: si no tiene .bultos, es un registro antiguo (bulto suelto)
+    if (!r.bultos || !Array.isArray(r.bultos)) {
+      return `
+        <div class="record-item">
+          <div class="record-top">
+            <div>
+              <div class="record-guia">${r.guia || '—'} <span class="tag tag-orange" style="margin-left:6px;">legacy</span></div>
+              <div class="record-date">${r.fecha || ''}${r.operario ? ' · ' + r.operario : ''}</div>
+            </div>
+            <button class="record-del" onclick="deleteRecord(${r.id})">🗑</button>
+          </div>
+          <div class="record-dims">${r.largo} × ${r.ancho} × ${r.alto} cm · Real: ${r.pesoReal} kg${r.zona ? ' · ' + r.zona : ''}</div>
+          <div class="record-fact">Facturable: ${r.facturable} kg</div>
+        </div>`;
+    }
+    const totalFact = r.bultos.reduce((s,b) => s + b.facturable, 0);
+    const totalReal = r.bultos.reduce((s,b) => s + b.pesoReal, 0);
+    const someAR = r.bultos.some(b => b.fromAR);
+    return `
+      <div class="record-item">
+        <div class="record-top">
+          <div>
+            <div class="record-guia">${r.guia}</div>
+            <div class="record-date">${r.fecha}${r.operario ? ' · ' + r.operario : ''}${r.zona ? ' · ' + r.zona : ''}</div>
+          </div>
+          <button class="record-del" onclick="deleteRecord(${r.id})">🗑</button>
         </div>
-        <button class="record-del" onclick="deleteRecord(${r.id})">🗑</button>
-      </div>
-      <div class="record-dims">${r.largo} × ${r.ancho} × ${r.alto} cm · Real: ${r.pesoReal} kg · Vol: ${r.pesoVol} kg${r.zona ? ' · ' + r.zona : ''}${r.fromAR ? ' <span class="tag tag-blue">AR</span>' : ''}</div>
-      <div style="display:flex;justify-content:space-between;align-items:center;">
-        <div class="record-fact">Facturable: ${r.facturable} kg</div>
-        ${r.obs ? `<div style="font-size:11px;color:var(--text2);max-width:150px;text-align:right;">${r.obs}</div>` : ''}
-      </div>
-    </div>
-  `).join('');
+        <div class="record-dims">${r.bultos.length} bulto(s) · Real total: ${totalReal.toFixed(2)} kg${someAR ? ' <span class="tag tag-blue">AR</span>' : ''}</div>
+        <div class="record-fact">Facturable: ${totalFact.toFixed(2)} kg</div>
+        <details style="margin-top:6px;">
+          <summary style="font-size:12px;color:var(--text2);cursor:pointer;">Ver detalle por bulto</summary>
+          <div style="margin-top:6px;display:flex;flex-direction:column;gap:4px;">
+            ${r.bultos.map(b => `
+              <div style="font-size:12px;color:var(--text2);padding:4px 0;border-top:1px solid rgba(255,255,255,.05);">
+                <strong style="color:var(--accent);">B${b.nro}:</strong> ${b.largo}×${b.ancho}×${b.alto} cm · ${b.pesoReal} kg real · <span style="color:var(--green);">${b.facturable.toFixed(2)} kg fact</span>${b.obs ? '<br><em style="color:#aaa;">' + b.obs + '</em>' : ''}
+              </div>
+            `).join('')}
+          </div>
+        </details>
+      </div>`;
+  }).join('');
 }
 
 function deleteRecord(id) {
@@ -1085,20 +1333,51 @@ function clearRecords() {
   toast('Registros eliminados');
 }
 
-// ── CSV Export ─────────────────────────────────────────────
+// ── CSV Export (una fila por remito con totales) ───────────
 function exportCSV() {
   const records = getRecords();
-  if (!records.length) { toast('⚠ No hay registros para exportar'); return; }
+  if (!records.length) { toast('⚠ No hay remitos para exportar'); return; }
 
-  const headers = ['Fecha','N_Guia','Operario','Largo_cm','Ancho_cm','Alto_cm','Peso_Real_kg','Peso_Vol_kg','Peso_Facturable_kg','Zona','Medicion_AR','Observaciones'];
-  const rows = records.map(r => [
-    r.fecha, r.guia, r.operario,
-    r.largo, r.ancho, r.alto,
-    r.pesoReal, r.pesoVol, r.facturable,
-    r.zona, r.fromAR ? 'SI' : 'NO', r.obs
-  ].map(v => `"${String(v||'').replace(/"/g,'""')}"`).join(','));
+  const headers = [
+    'Fecha','N_Remito','Operario','Zona',
+    'Cantidad_Bultos','Peso_Real_Total_kg','Peso_Vol_Total_kg','Peso_Facturable_Total_kg',
+    'Volumen_Total_cm3','Medicion_AR','Observaciones_Bultos'
+  ];
 
-  const csv = [headers.join(','), ...rows].join('\n');
+  const rows = records.map(r => {
+    // Soporte legacy
+    if (!r.bultos || !Array.isArray(r.bultos)) {
+      return [
+        r.fecha || '', r.guia || '', r.operario || '', r.zona || '',
+        1,
+        (r.pesoReal || 0).toFixed(2),
+        (r.pesoVol  || 0).toFixed(2),
+        (r.facturable || 0).toFixed(2),
+        ((r.largo||0)*(r.ancho||0)*(r.alto||0)).toFixed(0),
+        r.fromAR ? 'SI' : 'NO',
+        r.obs || ''
+      ];
+    }
+    const totalReal = r.bultos.reduce((s,b) => s + b.pesoReal, 0);
+    const totalPvol = r.bultos.reduce((s,b) => s + b.pesoVol, 0);
+    const totalFact = r.bultos.reduce((s,b) => s + b.facturable, 0);
+    const totalVol  = r.bultos.reduce((s,b) => s + b.volumen, 0);
+    const someAR = r.bultos.some(b => b.fromAR);
+    const obsConcat = r.bultos.filter(b => b.obs).map(b => 'B'+b.nro+': '+b.obs).join(' | ');
+    return [
+      r.fecha, r.guia, r.operario, r.zona,
+      r.bultos.length,
+      totalReal.toFixed(2),
+      totalPvol.toFixed(2),
+      totalFact.toFixed(2),
+      totalVol.toFixed(0),
+      someAR ? 'SI' : 'NO',
+      obsConcat
+    ];
+  });
+
+  const csvRows = rows.map(row => row.map(v => `"${String(v == null ? '' : v).replace(/"/g,'""')}"`).join(','));
+  const csv = [headers.join(','), ...csvRows].join('\n');
   const blob = new Blob(['﻿' + csv], { type: 'text/csv;charset=utf-8;' });
   const url  = URL.createObjectURL(blob);
   const a    = document.createElement('a');
@@ -1107,7 +1386,7 @@ function exportCSV() {
   a.download = `DimScan_CrossDock_${date}.csv`;
   a.click();
   URL.revokeObjectURL(url);
-  toast('✅ CSV exportado – ' + records.length + ' registros');
+  toast('✅ CSV exportado – ' + records.length + ' remito(s)');
 }
 
 // ── Version check ──────────────────────────────────────────
