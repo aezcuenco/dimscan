@@ -7,6 +7,9 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
 <title>DimScan – Encopress Cross Dock</title>
 
 <style>
@@ -109,8 +112,17 @@ html,body{height:100%;width:100%;overflow:hidden;background:var(--bg);color:var(
 .scan-frame{width:260px;height:160px;border:3px solid var(--accent);border-radius:16px;box-shadow:0 0 0 9999px rgba(0,0,0,.55);}
 .scan-line{position:absolute;width:220px;height:2px;background:linear-gradient(90deg,transparent,var(--accent),transparent);animation:scanline 2s ease-in-out infinite;}
 @keyframes scanline{0%,100%{top:calc(50% - 70px);}50%{top:calc(50% + 70px);}}
-.scan-tip{position:absolute;bottom:120px;color:#fff;font-size:14px;text-align:center;padding:0 30px;text-shadow:0 1px 4px rgba(0,0,0,.8);}
-.scan-btns{position:absolute;bottom:30px;display:flex;gap:12px;width:100%;padding:0 20px;pointer-events:all;}
+.scan-tip{position:absolute;bottom:170px;color:#fff;font-size:14px;text-align:center;padding:0 30px;text-shadow:0 1px 4px rgba(0,0,0,.8);}
+.scan-status{position:absolute;top:20px;left:50%;transform:translateX(-50%);background:rgba(15,25,35,.85);color:#fff;padding:8px 16px;border-radius:20px;font-size:13px;font-weight:700;display:flex;align-items:center;gap:8px;border:1px solid rgba(77,163,232,.4);}
+.scan-status .dot{width:8px;height:8px;border-radius:50%;background:var(--orange);animation:pulse 1.5s infinite;}
+.scan-status.ready .dot{background:var(--green);animation:none;}
+.scan-tools{position:absolute;top:80px;right:20px;display:flex;flex-direction:column;gap:10px;pointer-events:all;}
+.scan-tool-btn{width:48px;height:48px;border-radius:50%;background:rgba(15,25,35,.85);border:1px solid rgba(255,255,255,.2);color:#fff;font-size:20px;cursor:pointer;display:flex;align-items:center;justify-content:center;}
+.scan-tool-btn.on{background:var(--accent);}
+.scan-btns{position:absolute;bottom:30px;display:flex;gap:10px;width:100%;padding:0 20px;pointer-events:all;flex-wrap:wrap;}
+.scan-btns .btn{flex:1;min-width:0;}
+.focus-pulse{position:absolute;width:60px;height:60px;border:2px solid var(--accent);border-radius:50%;pointer-events:none;animation:focuspulse .8s ease-out forwards;}
+@keyframes focuspulse{0%{transform:scale(1.5);opacity:1;}100%{transform:scale(.8);opacity:0;}}
 
 /* ── AR screen ── */
 #screen-ar{background:#000;}
@@ -122,11 +134,13 @@ html,body{height:100%;width:100%;overflow:hidden;background:var(--bg);color:var(
 .ar-step-text{font-size:14px;color:#fff;line-height:1.4;}
 .ar-cancel{background:rgba(224,85,85,.8);border:none;color:#fff;border-radius:10px;padding:10px 16px;font-size:13px;font-weight:700;cursor:pointer;}
 .ar-center{flex:1;display:flex;align-items:center;justify-content:center;}
-.reticle{width:60px;height:60px;position:relative;}
-.reticle::before,.reticle::after{content:'';position:absolute;background:var(--accent);}
+.reticle{width:60px;height:60px;position:relative;transition:filter .2s;}
+.reticle::before,.reticle::after{content:'';position:absolute;background:var(--accent);transition:background .2s;}
 .reticle::before{width:2px;height:100%;left:50%;transform:translateX(-50%);}
 .reticle::after{width:100%;height:2px;top:50%;transform:translateY(-50%);}
-.reticle-ring{position:absolute;width:60px;height:60px;border:2px solid var(--accent);border-radius:50%;opacity:.6;animation:pulse 1.5s ease-in-out infinite;}
+.reticle-ring{position:absolute;width:60px;height:60px;border:2px solid var(--accent);border-radius:50%;opacity:.6;animation:pulse 1.5s ease-in-out infinite;transition:border-color .2s;}
+.reticle.ready::before,.reticle.ready::after{background:var(--green);}
+.reticle.ready ~ .reticle-ring,.reticle-ring.ready{border-color:var(--green);}
 @keyframes pulse{0%,100%{transform:scale(1);opacity:.6;}50%{transform:scale(1.2);opacity:.3;}}
 .ar-tap-hint{background:rgba(77,163,232,.9);border-radius:20px;padding:6px 16px;font-size:13px;color:#fff;font-weight:700;}
 .ar-bottom{padding:20px;pointer-events:all;}
@@ -159,6 +173,11 @@ html,body{height:100%;width:100%;overflow:hidden;background:var(--bg);color:var(
 .logo-box{width:36px;height:36px;background:var(--blue-mid);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:900;color:#fff;}
 .logo-text{font-size:20px;font-weight:700;color:#fff;}
 .logo-sub{font-size:12px;color:var(--text2);margin-top:1px;}
+
+/* ── Update banner ── */
+#update-banner{position:fixed;top:0;left:0;right:0;background:var(--green);color:#fff;padding:12px 16px;display:none;align-items:center;justify-content:space-between;gap:12px;z-index:10000;font-size:13px;font-weight:700;box-shadow:0 2px 12px rgba(0,0,0,.5);}
+#update-banner.show{display:flex;}
+#update-banner button{background:rgba(255,255,255,.25);border:1px solid rgba(255,255,255,.4);color:#fff;padding:6px 14px;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;white-space:nowrap;}
 
 /* ── Tag ── */
 .tag{display:inline-block;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:700;}
@@ -221,15 +240,20 @@ html,body{height:100%;width:100%;overflow:hidden;background:var(--bg);color:var(
 ══════════════════════════════════════════ -->
 <div class="screen" id="screen-barcode">
   <video id="barcode-video" autoplay playsinline muted></video>
-  <canvas id="barcode-canvas"></canvas>
   <div class="scan-overlay">
-    <div class="scan-frame"></div>
+    <div class="scan-frame" id="scan-frame"></div>
     <div class="scan-line"></div>
-    <div class="scan-tip">Apuntá la cámara al código de barras del bulto</div>
+    <div class="scan-status" id="scan-status"><span class="dot"></span><span id="scan-status-txt">Iniciando cámara…</span></div>
+    <div class="scan-tip">Apuntá al código de barras y tocá la pantalla para enfocar</div>
+  </div>
+  <div class="scan-tools">
+    <button class="scan-tool-btn" id="torch-btn" onclick="toggleTorch()" title="Linterna">🔦</button>
+    <button class="scan-tool-btn" onclick="zoomIn()" title="Acercar">＋</button>
+    <button class="scan-tool-btn" onclick="zoomOut()" title="Alejar">－</button>
   </div>
   <div class="scan-btns">
-    <button class="btn btn-ghost" style="flex:1" onclick="stopBarcode();showScreen('screen-home')">Cancelar</button>
-    <button class="btn btn-ghost" style="flex:1" onclick="enterBarcodeManual()">Ingresar manualmente</button>
+    <button class="btn btn-ghost btn-sm" style="flex:1" onclick="stopBarcode();showScreen('screen-home')">Cancelar</button>
+    <button class="btn btn-ghost btn-sm" style="flex:1" onclick="enterBarcodeManual()">Manual</button>
   </div>
 </div>
 
@@ -248,9 +272,9 @@ html,body{height:100%;width:100%;overflow:hidden;background:var(--bg);color:var(
     </div>
     <div class="ar-center">
       <div>
-        <div class="reticle-ring"></div>
-        <div class="reticle"></div>
-        <div style="text-align:center;margin-top:12px;"><span class="ar-tap-hint" id="ar-tap-label">↓ Tocá para marcar</span></div>
+        <div class="reticle-ring" id="ar-reticle-ring"></div>
+        <div class="reticle" id="ar-reticle"></div>
+        <div style="text-align:center;margin-top:12px;"><span class="ar-tap-hint" id="ar-tap-label">Buscando superficie…</span></div>
       </div>
     </div>
     <div class="ar-bottom">
@@ -267,6 +291,7 @@ html,body{height:100%;width:100%;overflow:hidden;background:var(--bg);color:var(
         <button class="ar-tap-btn" onclick="confirmARMeasure()">✓ Confirmar medidas</button>
       </div>
       <button class="ar-tap-btn" id="ar-tap-btn" onclick="arTap()">📍 Marcar punto</button>
+      <button class="btn btn-ghost btn-sm" style="margin-top:8px;" onclick="resetARPoints()">↺ Reiniciar puntos</button>
     </div>
   </div>
 </div>
@@ -433,14 +458,23 @@ html,body{height:100%;width:100%;overflow:hidden;background:var(--bg);color:var(
   </div>
 </div>
 
+<!-- ── Update banner ── -->
+<div id="update-banner">
+  <span>🆕 Hay una versión nueva de DimScan disponible</span>
+  <button onclick="reloadApp()">Recargar</button>
+</div>
+
 <!-- ── Toast ── -->
 <div id="toast"></div>
 
 <!-- ══════════════════════════════════════════
      JAVASCRIPT
 ══════════════════════════════════════════ -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jsQR/1.4.0/jsQR.min.js" crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/@zxing/library@0.21.3/umd/index.min.js"></script>
 <script>
+// ── Build version (cambiá este string cada vez que subís cambios) ──
+const BUILD_VERSION = '2026-05-15-48';
+
 // ── State ──────────────────────────────────────────────────
 const state = {
   currentGuia: '',
@@ -456,7 +490,10 @@ const state = {
   xrFrame: null,
   xrAnimFrame: null,
   barcodeStream: null,
-  barcodeAnimFrame: null,
+  barcodeReader: null,
+  barcodeTrack: null,
+  torchOn: false,
+  currentZoom: 1,
   lastOperario: localStorage.getItem('lastOperario') || ''
 };
 
@@ -501,52 +538,155 @@ function startNewRecord() {
   startBarcode();
 }
 
-// ── Barcode scanner ────────────────────────────────────────
-function startBarcode() {
+// ── Barcode scanner (ZXing multi-formato) ──────────────────
+async function startBarcode() {
   showScreen('screen-barcode');
   const video = document.getElementById('barcode-video');
-  const canvas = document.getElementById('barcode-canvas');
-  const ctx = canvas.getContext('2d');
+  const statusEl = document.getElementById('scan-status');
+  const statusTxt = document.getElementById('scan-status-txt');
+  state.torchOn = false;
+  state.currentZoom = 1;
+  document.getElementById('torch-btn').classList.remove('on');
+  statusEl.classList.remove('ready');
+  statusTxt.textContent = 'Iniciando cámara…';
 
-  navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } })
-    .then(stream => {
-      state.barcodeStream = stream;
-      video.srcObject = stream;
-      video.play();
-      video.addEventListener('loadedmetadata', () => {
-        canvas.width = video.videoWidth;
-        canvas.height = video.videoHeight;
-        scanFrame();
-      });
-    })
-    .catch(() => {
-      toast('⚠ No se pudo acceder a la cámara');
-      enterBarcodeManual();
-    });
-
-  function scanFrame() {
-    if (video.readyState === video.HAVE_ENOUGH_DATA) {
-      ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-      const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-      const code = jsQR(imageData.data, imageData.width, imageData.height, {
-        inversionAttempts: 'dontInvert'
-      });
-      if (code && code.data) {
-        stopBarcode();
-        onBarcodeDetected(code.data);
-        return;
-      }
+  // 1) Solicitar cámara trasera con alta resolución + autofocus continuo
+  const constraints = {
+    audio: false,
+    video: {
+      facingMode: { ideal: 'environment' },
+      width:  { ideal: 1920 },
+      height: { ideal: 1080 },
+      frameRate: { ideal: 30 },
+      focusMode: 'continuous'
     }
-    state.barcodeAnimFrame = requestAnimationFrame(scanFrame);
+  };
+
+  let stream;
+  try {
+    stream = await navigator.mediaDevices.getUserMedia(constraints);
+  } catch (e) {
+    // Fallback con constraints mínimos
+    try {
+      stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
+    } catch (e2) {
+      toast('⚠ No se pudo acceder a la cámara: ' + (e2.message || e2.name));
+      setTimeout(enterBarcodeManual, 700);
+      return;
+    }
+  }
+
+  state.barcodeStream = stream;
+  const track = stream.getVideoTracks()[0];
+  state.barcodeTrack = track;
+  video.srcObject = stream;
+  try { await video.play(); } catch {}
+
+  // 2) Forzar autofocus / exposición / balance de blancos continuos vía advanced constraints
+  try {
+    const caps = (track.getCapabilities && track.getCapabilities()) || {};
+    const adv = [];
+    if (caps.focusMode && caps.focusMode.includes('continuous')) adv.push({ focusMode: 'continuous' });
+    if (caps.exposureMode && caps.exposureMode.includes('continuous')) adv.push({ exposureMode: 'continuous' });
+    if (caps.whiteBalanceMode && caps.whiteBalanceMode.includes('continuous')) adv.push({ whiteBalanceMode: 'continuous' });
+    if (adv.length) await track.applyConstraints({ advanced: adv });
+    // Mostrar botón de linterna solo si soportado
+    document.getElementById('torch-btn').style.display = (caps.torch) ? 'flex' : 'none';
+  } catch (e) { /* algunos navegadores no soportan applyConstraints */ }
+
+  statusEl.classList.add('ready');
+  statusTxt.textContent = 'Listo – buscando código…';
+
+  // 3) Tap-to-focus: al tocar el video reenfocar en ese punto
+  video.addEventListener('click', onVideoTap);
+
+  // 4) Iniciar lector ZXing multi-formato
+  try {
+    const hints = new Map();
+    const fmt = ZXing.BarcodeFormat;
+    const dh  = ZXing.DecodeHintType;
+    hints.set(dh.POSSIBLE_FORMATS, [
+      fmt.CODE_128, fmt.CODE_39, fmt.CODE_93,
+      fmt.EAN_13,  fmt.EAN_8,  fmt.UPC_A, fmt.UPC_E,
+      fmt.ITF,     fmt.CODABAR,
+      fmt.QR_CODE, fmt.DATA_MATRIX, fmt.PDF_417
+    ]);
+    hints.set(dh.TRY_HARDER, true);
+
+    const reader = new ZXing.BrowserMultiFormatReader(hints, 250);
+    state.barcodeReader = reader;
+    reader.decodeFromVideoElement(video, (result, err) => {
+      if (result && result.getText) {
+        const txt = result.getText();
+        if (txt && txt.trim().length >= 4) {
+          stopBarcode();
+          onBarcodeDetected(txt.trim());
+        }
+      }
+    });
+  } catch (e) {
+    toast('⚠ Error iniciando lector: ' + (e.message || e));
+    setTimeout(enterBarcodeManual, 700);
   }
 }
 
+function onVideoTap(ev) {
+  const track = state.barcodeTrack;
+  if (!track) return;
+  // Animar pulso visual en el punto tocado
+  const rect = ev.currentTarget.getBoundingClientRect();
+  const px = ev.clientX - rect.left - 30;
+  const py = ev.clientY - rect.top - 30;
+  const pulse = document.createElement('div');
+  pulse.className = 'focus-pulse';
+  pulse.style.left = px + 'px';
+  pulse.style.top  = py + 'px';
+  document.getElementById('screen-barcode').appendChild(pulse);
+  setTimeout(() => pulse.remove(), 800);
+  // Reaplicar autofocus
+  try {
+    track.applyConstraints({ advanced: [{ focusMode: 'continuous' }] }).catch(() => {});
+  } catch {}
+}
+
+async function toggleTorch() {
+  const track = state.barcodeTrack;
+  if (!track) return;
+  const caps = (track.getCapabilities && track.getCapabilities()) || {};
+  if (!caps.torch) { toast('⚠ Linterna no soportada en este dispositivo'); return; }
+  state.torchOn = !state.torchOn;
+  try {
+    await track.applyConstraints({ advanced: [{ torch: state.torchOn }] });
+    document.getElementById('torch-btn').classList.toggle('on', state.torchOn);
+  } catch (e) {
+    toast('⚠ No se pudo cambiar la linterna');
+  }
+}
+
+async function applyZoom() {
+  const track = state.barcodeTrack;
+  if (!track || !track.applyConstraints) return;
+  const caps = (track.getCapabilities && track.getCapabilities()) || {};
+  if (!caps.zoom) return;
+  const z = Math.min(Math.max(state.currentZoom, caps.zoom.min || 1), caps.zoom.max || 5);
+  try { await track.applyConstraints({ advanced: [{ zoom: z }] }); } catch {}
+}
+function zoomIn()  { state.currentZoom = Math.min(state.currentZoom + 0.5, 5); applyZoom(); }
+function zoomOut() { state.currentZoom = Math.max(state.currentZoom - 0.5, 1); applyZoom(); }
+
 function stopBarcode() {
-  cancelAnimationFrame(state.barcodeAnimFrame);
+  const video = document.getElementById('barcode-video');
+  if (video) video.removeEventListener('click', onVideoTap);
+  if (state.barcodeReader) {
+    try { state.barcodeReader.reset(); } catch {}
+    state.barcodeReader = null;
+  }
   if (state.barcodeStream) {
     state.barcodeStream.getTracks().forEach(t => t.stop());
     state.barcodeStream = null;
   }
+  state.barcodeTrack = null;
+  state.torchOn = false;
 }
 
 function onBarcodeDetected(code) {
@@ -619,12 +759,30 @@ async function startAR() {
   if (!gl) { fallbackToManual(); return; }
   state.xrGL = gl;
 
+  // Intentar con dom-overlay como required (sin overlay no se ven los botones)
+  let session = null;
   try {
-    const session = await navigator.xr.requestSession('immersive-ar', {
-      requiredFeatures: ['hit-test'],
-      optionalFeatures: ['dom-overlay', 'local-floor'],
+    session = await navigator.xr.requestSession('immersive-ar', {
+      requiredFeatures: ['hit-test', 'dom-overlay'],
+      optionalFeatures: ['local-floor'],
       domOverlay: { root: document.getElementById('ar-overlay') }
     });
+  } catch (e1) {
+    // Algunos dispositivos no soportan dom-overlay como required — intentar sin él
+    try {
+      session = await navigator.xr.requestSession('immersive-ar', {
+        requiredFeatures: ['hit-test'],
+        optionalFeatures: ['local-floor']
+      });
+      toast('⚠ AR sin overlay – usá los botones físicos si no ves la UI');
+    } catch (e2) {
+      toast('⚠ No se pudo iniciar AR: ' + (e2.message || e2.name));
+      fallbackToManual();
+      return;
+    }
+  }
+
+  try {
     state.xrSession = session;
     await gl.makeXRCompatible();
     session.updateRenderState({ baseLayer: new XRWebGLLayer(session, gl) });
@@ -633,10 +791,13 @@ async function startAR() {
     state.xrRefSpace  = await session.requestReferenceSpace('local');
     state.xrHitTestSource = await session.requestHitTestSource({ space: viewerSpace });
 
-    session.addEventListener('end', () => { state.xrSession = null; });
+    session.addEventListener('end', () => {
+      state.xrSession = null;
+      state.xrHitTestSource = null;
+    });
     session.requestAnimationFrame(arFrame);
   } catch (e) {
-    toast('⚠ No se pudo iniciar AR: ' + e.message);
+    toast('⚠ Error configurando AR: ' + (e.message || e));
     fallbackToManual();
   }
 }
@@ -652,13 +813,42 @@ function arFrame(time, xrFrame) {
   gl.clearColor(0, 0, 0, 0);
   gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
+  let hitNow = false;
   if (state.xrHitTestSource && state.xrPoints.length < 3) {
     const hits = xrFrame.getHitTestResults(state.xrHitTestSource);
     if (hits.length > 0) {
       const pose = hits[0].getPose(state.xrRefSpace);
       state.xrCurrentHit = { ...pose.transform.position };
+      hitNow = true;
+    } else {
+      state.xrCurrentHit = null;
     }
   }
+  // Actualizar feedback visual del reticle
+  const ret = document.getElementById('ar-reticle');
+  const ring = document.getElementById('ar-reticle-ring');
+  const label = document.getElementById('ar-tap-label');
+  if (ret && ring && label) {
+    if (hitNow) {
+      ret.classList.add('ready');
+      ring.classList.add('ready');
+      if (state.xrPoints.length < 3) label.textContent = '✓ Tocá MARCAR PUNTO';
+    } else if (state.xrPoints.length < 3) {
+      ret.classList.remove('ready');
+      ring.classList.remove('ready');
+      label.textContent = 'Buscando superficie…';
+    }
+  }
+}
+
+function resetARPoints() {
+  state.xrPoints = [];
+  state.arLargo = null;
+  state.arAncho = null;
+  document.getElementById('ar-result-box').style.display = 'none';
+  document.getElementById('ar-tap-btn').style.display = 'block';
+  updateARUI(0);
+  toast('↺ Puntos reiniciados');
 }
 
 function arTap() {
@@ -895,9 +1085,33 @@ function exportCSV() {
   toast('✅ CSV exportado – ' + records.length + ' registros');
 }
 
+// ── Version check ──────────────────────────────────────────
+async function checkForUpdate() {
+  try {
+    // Fetch del propio HTML con cache-buster, buscar la const BUILD_VERSION
+    const url = location.pathname + '?_v=' + Date.now();
+    const res = await fetch(url, { cache: 'no-store' });
+    if (!res.ok) return;
+    const html = await res.text();
+    const m = html.match(/const\s+BUILD_VERSION\s*=\s*['"]([^'"]+)['"]/);
+    if (m && m[1] && m[1] !== BUILD_VERSION) {
+      document.getElementById('update-banner').classList.add('show');
+    }
+  } catch (e) { /* offline o sin conectividad — silencio */ }
+}
+
+function reloadApp() {
+  // Forzar bypass de caché en la recarga
+  const url = location.pathname + '?_v=' + Date.now();
+  location.replace(url);
+}
+
 // ── Init ───────────────────────────────────────────────────
 checkARSupport();
 updateHomeStats();
+// Chequear versión al arrancar y cada 5 minutos
+setTimeout(checkForUpdate, 3000);
+setInterval(checkForUpdate, 5 * 60 * 1000);
 </script>
 </body>
 </html>
